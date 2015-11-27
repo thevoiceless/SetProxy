@@ -4,6 +4,11 @@ android {
     compileSdkVersion 23
     buildToolsVersion "22.0.1"
 
+    // Fixes a conflict between Realm and Butterknife
+    packagingOptions {
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+    }
+
     defaultConfig {
         applicationId "thevoiceless.setproxy"
         minSdkVersion 16
@@ -27,4 +32,6 @@ dependencies {
 
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.jakewharton.timber:timber:4.1.0'
+
+    compile 'io.realm:realm-android:0.85.1'
 }

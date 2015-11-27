@@ -25,8 +25,10 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import io.realm.Realm;
 import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.Utils;
+import thevoiceless.setproxy.data.ProxyConfiguration;
 import timber.log.Timber;
 
 /**
@@ -126,6 +128,26 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         if (validateInput() && setWifiProxySettings(hostString(), Integer.valueOf(portString()))) {
+                            Realm.getInstance(MainActivity.this).executeTransaction(new Realm.Transaction() {
+                                @Override
+                                public void execute(Realm realm) {
+                                    ProxyConfiguration proxy = new ProxyConfiguration(hostString(), portString());
+                                    realm.copyToRealmOrUpdate(proxy);
+                                }
+                            },
+                            new Realm.Transaction.Callback() {
+                                @Override
+                                public void onSuccess() {
+                                    Timber.i("Success!");
+                                    // TODO probably init loader
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Timber.e("Error", e);
+                                    // TODO
+                                }
+                            });
                             setFabClearsProxy();
                             populateFields(getCurrentProxy());
                         } else {
