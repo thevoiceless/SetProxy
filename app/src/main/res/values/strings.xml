@@ -1,8 +1,14 @@
 <resources>
     <string name="app_name">SetProxy</string>
+
     <string name="host">Host</string>
     <string name="port">Port</string>
     <string name="colon">:</string>
     <string name="clear">Clear</string>
     <string name="set">Set</string>
+
+    <string name="required">Required</string>
+    <string name="host_error_empty">@string/required</string>
+    <string name="port_error_empty">@string/required</string>
+    <string name="port_error_number">Digits only</string>
 </resources>

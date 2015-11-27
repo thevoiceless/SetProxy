@@ -8,11 +8,13 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 
@@ -23,7 +25,6 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.Utils;
 import timber.log.Timber;
@@ -33,10 +34,17 @@ import timber.log.Timber;
  */
 public class MainActivity extends AppCompatActivity {
 
+    private static final String HOST = "192.168.1.5";
+    private static final int PORT = 8888;
+
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
+    @Bind(R.id.host_input_layout)
+    TextInputLayout mHostInputLayout;
     @Bind(R.id.host_input)
     EditText mHostInput;
+    @Bind(R.id.port_input_layout)
+    TextInputLayout mPortInputLayout;
     @Bind(R.id.port_input)
     EditText mPortInput;
     @Bind(R.id.clear_save_fab)
@@ -44,8 +52,6 @@ public class MainActivity extends AppCompatActivity {
 
     private WifiManager mWifiManager;
     private static final Class sWifiConfigurationClass = WifiConfiguration.class;
-
-    private boolean mProxySet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initProxyInfo() {
         if (!mWifiManager.isWifiEnabled()) {
-            // TODO
+            // TODO also check if connected
         }
 
         try {
@@ -69,11 +75,10 @@ public class MainActivity extends AppCompatActivity {
                 final ProxyInfo proxyInfo = getCurrentProxy();
 
                 if (proxyInfo != null) {
-                    mProxySet = true;
+                    // Proxy is already set
                     populateFields(proxyInfo);
                     setFabClearsProxy();
                 } else {
-                    mProxySet = false;
                     setFabSavesProxy();
                 }
             } else {
@@ -87,11 +92,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mClearSaveFab.setVisibility(View.VISIBLE);
-
                 mClearSaveFab.setBackgroundTintList(getResources().getColorStateList(R.color.fab_clear_proxy));
                 mClearSaveFab.setImageResource(R.drawable.clear);
 
                 mClearSaveFab.animate().scaleX(1f).scaleY(1f).setDuration(200).setListener(null).start();
+
+                mClearSaveFab.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (unsetWifiProxySettings()) {
+                            setFabSavesProxy();
+                        } else {
+                            // TODO
+                        }
+                    }
+                });
             }
         }).start();
 
@@ -102,29 +117,65 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mClearSaveFab.setVisibility(View.VISIBLE);
-
                 mClearSaveFab.setBackgroundTintList(getResources().getColorStateList(R.color.fab_save_proxy));
                 mClearSaveFab.setImageResource(R.drawable.save);
 
                 mClearSaveFab.animate().scaleX(1f).scaleY(1f).setDuration(200).setListener(null).start();
+
+                mClearSaveFab.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (validateInput() && setWifiProxySettings(hostString(), Integer.valueOf(portString()))) {
+                            setFabClearsProxy();
+                            populateFields(getCurrentProxy());
+                        } else {
+                            // TODO
+                        }
+                    }
+                });
             }
         }).start();
     }
 
-    @OnClick(R.id.clear_save_fab)
-    public void onFabClick(View view) {
-        if (mProxySet && unsetWifiProxySettings()) {
-            mProxySet = false;
-            setFabSavesProxy();
-        } else if (!mProxySet && setWifiProxySettings()) {
-            mProxySet = true;
-            setFabClearsProxy();
-            populateFields(getCurrentProxy());
-        } else {
-            Snackbar.make(view, "TODO", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null)
-                    .show();
+    private boolean validateInput() {
+        // Not combining into a single return statement to ensure that all validations are run
+        boolean validHost = validateHost();
+        boolean validPort = validatePort();
+        return validHost && validPort;
+    }
+
+    private boolean validateHost() {
+        if (TextUtils.isEmpty(hostString())) {
+            mHostInputLayout.setError(getString(R.string.host_error_empty));
+            return false;
         }
+
+        mHostInputLayout.setError(null);
+        return true;
+    }
+
+    private boolean validatePort() {
+        if (TextUtils.isEmpty(portString())) {
+            mPortInputLayout.setError(getString(R.string.port_error_empty));
+            return false;
+        }
+        try {
+            Integer.valueOf(portString());
+        } catch (NumberFormatException e) {
+            mPortInputLayout.setError(getString(R.string.port_error_number));
+            return false;
+        }
+
+        mPortInputLayout.setError(null);
+        return true;
+    }
+
+    private String hostString() {
+        return mHostInput.getText().toString().trim();
+    }
+
+    private String portString() {
+        return mPortInput.getText().toString().trim();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -149,6 +200,12 @@ public class MainActivity extends AppCompatActivity {
             mPortInput.setText(null);
         }
     }
+
+
+
+
+
+
 
     public static Object getField(Object obj, String name)
             throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
@@ -183,7 +240,9 @@ public class MainActivity extends AppCompatActivity {
         return configuration;
     }
 
-    public boolean setWifiProxySettings() {
+    public boolean setWifiProxySettings(@NonNull final String host, final int port) {
+        if (TextUtils.isEmpty(host)) return false;
+
         //get the current wifi configuration
         WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         WifiConfiguration config = getCurrentWifiConfiguration();
@@ -200,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
                 Method setProxy = config.getClass().getDeclaredMethod("setProxy", setProxyParams);
                 setProxy.setAccessible(true);
 
-                ProxyInfo desiredProxy = ProxyInfo.buildDirectProxy("192.168.1.5", 8888);
+                ProxyInfo desiredProxy = ProxyInfo.buildDirectProxy(host, port);
 
                 Object[] methodParams = new Object[2];
                 methodParams[0] = Enum.valueOf(proxySettings, "STATIC");
@@ -231,8 +290,8 @@ public class MainActivity extends AppCompatActivity {
 
                 //create the parameters for the constructor
                 Object[] proxyPropertiesCtorParams = new Object[3];
-                proxyPropertiesCtorParams[0] = "192.168.1.5";
-                proxyPropertiesCtorParams[1] = 8888;
+                proxyPropertiesCtorParams[0] = host;
+                proxyPropertiesCtorParams[1] = port;
                 proxyPropertiesCtorParams[2] = null;
 
                 //create a new object using the params
