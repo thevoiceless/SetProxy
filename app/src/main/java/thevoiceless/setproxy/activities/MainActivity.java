@@ -1,16 +1,20 @@
 package thevoiceless.setproxy.activities;
 
+import android.animation.Animator;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.ProxyInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.EditText;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -21,6 +25,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import thevoiceless.setproxy.R;
+import thevoiceless.setproxy.Utils;
 import timber.log.Timber;
 
 /**
@@ -28,10 +33,19 @@ import timber.log.Timber;
  */
 public class MainActivity extends AppCompatActivity {
 
-    @Bind(R.id.toolbar) Toolbar mToolbar;
-    @Bind(R.id.fab) FloatingActionButton mFab;
+    @Bind(R.id.toolbar)
+    Toolbar mToolbar;
+    @Bind(R.id.host_input)
+    EditText mHostInput;
+    @Bind(R.id.port_input)
+    EditText mPortInput;
+    @Bind(R.id.clear_save_fab)
+    FloatingActionButton mClearSaveFab;
 
-    private boolean mDidSetProxy;
+    private WifiManager mWifiManager;
+    private static final Class sWifiConfigurationClass = WifiConfiguration.class;
+
+    private boolean mProxySet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,20 +53,100 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
+
+        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+
+        initProxyInfo();
     }
 
-    @OnClick(R.id.fab)
+    private void initProxyInfo() {
+        if (!mWifiManager.isWifiEnabled()) {
+            // TODO
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                final ProxyInfo proxyInfo = getCurrentProxy();
+
+                if (proxyInfo != null) {
+                    mProxySet = true;
+                    populateFields(proxyInfo);
+                    setFabClearsProxy();
+                } else {
+                    mProxySet = false;
+                    setFabSavesProxy();
+                }
+            } else {
+                // TODO
+            }
+        } catch (Exception e) { }
+    }
+
+    private void setFabClearsProxy() {
+        mClearSaveFab.animate().scaleX(0f).scaleY(0f).setDuration(200).setListener(new Utils.AnimatorListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mClearSaveFab.setVisibility(View.VISIBLE);
+
+                mClearSaveFab.setBackgroundTintList(getResources().getColorStateList(R.color.fab_clear_proxy));
+                mClearSaveFab.setImageResource(R.drawable.clear);
+
+                mClearSaveFab.animate().scaleX(1f).scaleY(1f).setDuration(200).setListener(null).start();
+            }
+        }).start();
+
+    }
+
+    private void setFabSavesProxy() {
+        mClearSaveFab.animate().scaleX(0f).scaleY(0f).setDuration(200).setListener(new Utils.AnimatorListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mClearSaveFab.setVisibility(View.VISIBLE);
+
+                mClearSaveFab.setBackgroundTintList(getResources().getColorStateList(R.color.fab_save_proxy));
+                mClearSaveFab.setImageResource(R.drawable.save);
+
+                mClearSaveFab.animate().scaleX(1f).scaleY(1f).setDuration(200).setListener(null).start();
+            }
+        }).start();
+    }
+
+    @OnClick(R.id.clear_save_fab)
     public void onFabClick(View view) {
-        if (mDidSetProxy && unsetWifiProxySettings()) {
-            mDidSetProxy = false;
-            mToolbar.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-        } else if (!mDidSetProxy && setWifiProxySettings()) {
-            mDidSetProxy = true;
-            mToolbar.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark));
+        if (mProxySet && unsetWifiProxySettings()) {
+            mProxySet = false;
+            setFabSavesProxy();
+        } else if (!mProxySet && setWifiProxySettings()) {
+            mProxySet = true;
+            setFabClearsProxy();
+            populateFields(getCurrentProxy());
         } else {
             Snackbar.make(view, "TODO", Snackbar.LENGTH_LONG)
                     .setAction("Action", null)
                     .show();
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Nullable
+    private ProxyInfo getCurrentProxy() {
+        try {
+            WifiConfiguration config = getCurrentWifiConfiguration();
+            Method getHttpProxy = sWifiConfigurationClass.getDeclaredMethod("getHttpProxy");
+            return (ProxyInfo) getHttpProxy.invoke(config);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void populateFields(@Nullable final ProxyInfo proxyInfo) {
+        if (proxyInfo != null) {
+            mHostInput.setText(proxyInfo.getHost());
+            mPortInput.setText(String.valueOf(proxyInfo.getPort()));
+        } else {
+            mHostInput.setText(null);
+            mPortInput.setText(null);
         }
     }
 
@@ -73,12 +167,12 @@ public class MainActivity extends AppCompatActivity {
         setEnumField(wifiConf, assign, "proxySettings");
     }
 
-    public static WifiConfiguration getCurrentWifiConfiguration(WifiManager manager) {
-        if (!manager.isWifiEnabled()) return null;
+    private WifiConfiguration getCurrentWifiConfiguration() {
+        if (!mWifiManager.isWifiEnabled()) return null;
 
-        List<WifiConfiguration> configurationList = manager.getConfiguredNetworks();
+        List<WifiConfiguration> configurationList = mWifiManager.getConfiguredNetworks();
         WifiConfiguration configuration = null;
-        int cur = manager.getConnectionInfo().getNetworkId();
+        int cur = mWifiManager.getConnectionInfo().getNetworkId();
         for (int i = 0; i < configurationList.size(); ++i) {
             WifiConfiguration wifiConfiguration = configurationList.get(i);
             if (wifiConfiguration.networkId == cur) {
@@ -92,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean setWifiProxySettings() {
         //get the current wifi configuration
         WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        WifiConfiguration config = getCurrentWifiConfiguration(manager);
+        WifiConfiguration config = getCurrentWifiConfiguration();
         if (config == null) return false;
 
         try {
@@ -167,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean unsetWifiProxySettings() {
         WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        WifiConfiguration config = getCurrentWifiConfiguration(manager);
+        WifiConfiguration config = getCurrentWifiConfiguration();
         if (config == null) return false;
 
         try {

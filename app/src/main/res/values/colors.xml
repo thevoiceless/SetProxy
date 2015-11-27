@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#404040</color>
+    <!-- http://chir.ag/projects/name-that-color -->
+    <color name="fun_green">#009933</color>
+
+    <color name="colorPrimary">#004d1a</color>
     <color name="colorPrimaryDark">#1a1a1a</color>
-    <color name="colorAccent">#1976D2</color>
+    <color name="colorAccent">@color/fun_green</color>
+    <color name="white_0.5_alpha">#80ffffff</color>
+    <color name="hint">@color/white_0.5_alpha</color>
+    <color name="button_text">@color/white_0.5_alpha</color>
+    <color name="fab_clear_proxy">#e60000</color>
+    <color name="fab_save_proxy">@color/fun_green</color>
+
 </resources>

@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SetProxy</string>
+    <string name="host">Host</string>
+    <string name="port">Port</string>
+    <string name="colon">:</string>
+    <string name="clear">Clear</string>
+    <string name="set">Set</string>
 </resources>
