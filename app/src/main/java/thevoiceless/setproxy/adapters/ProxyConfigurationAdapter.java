@@ -22,14 +22,14 @@ import static butterknife.ButterKnife.findById;
 public class ProxyConfigurationAdapter extends RecyclerView.Adapter<ProxyConfigurationAdapter.ProxyViewHolder> {
 
     public interface OnItemClickListener {
-        void onItemClick(@NonNull final View v, final int position);
+        void onItemClick(@NonNull final View v, @NonNull final ProxyConfiguration proxy);
     }
 
     public static class ProxyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public int position;
         public TextView host;
         public TextView port;
         public OnItemClickListener listener;
+        public ProxyConfiguration proxy;
 
         public ProxyViewHolder(View itemView) {
             super(itemView);
@@ -42,7 +42,7 @@ public class ProxyConfigurationAdapter extends RecyclerView.Adapter<ProxyConfigu
 
         @Override
         public void onClick(View v) {
-            if (listener != null) listener.onItemClick(v, position);
+            if (listener != null) listener.onItemClick(v, proxy);
         }
     }
 
@@ -66,10 +66,10 @@ public class ProxyConfigurationAdapter extends RecyclerView.Adapter<ProxyConfigu
     @Override
     public void onBindViewHolder(ProxyViewHolder holder, int position) {
         ProxyConfiguration proxy = mProxies.get(position);
-        holder.position = position;
         holder.host.setText(proxy.getHost());
         holder.port.setText(proxy.getPort());
         holder.listener = mListener;
+        holder.proxy = proxy;
     }
 
     public ProxyConfiguration getItem(final int position) {

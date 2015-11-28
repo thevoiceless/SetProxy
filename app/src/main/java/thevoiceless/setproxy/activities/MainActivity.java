@@ -20,6 +20,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
+import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.Utils;
 import thevoiceless.setproxy.adapters.ProxyConfigurationAdapter;
@@ -113,8 +114,7 @@ public class MainActivity extends AppCompatActivity {
     private void initListeners() {
         mProxiesList.setOnItemClickListener(new ProxyConfigurationAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(@NonNull View v, int position) {
-                ProxyConfiguration proxy = mProxiesList.getProxy(position);
+            public void onItemClick(@NonNull View v, @NonNull final ProxyConfiguration proxy) {
                 if (Utils.setWifiProxySettings(MainActivity.this, proxy.getHost(), Integer.valueOf(proxy.getPort()))) {
                     mCurrentProxy = proxy;
                     populateFields(mCurrentProxy);
@@ -149,20 +149,22 @@ public class MainActivity extends AppCompatActivity {
             mRealm.executeTransaction(new Realm.Transaction() {
                             @Override
                             public void execute(Realm realm) {
-                                realm.copyToRealmOrUpdate(mCurrentProxy);
+                                realm.copyToRealm(mCurrentProxy);
                             }
                         },
                         new Realm.Transaction.Callback() {
                             @Override
                             public void onSuccess() {
-                                // FIXME: Duplicates
                                 mProxiesList.addProxy(mCurrentProxy);
                             }
 
                             @Override
                             public void onError(Exception e) {
-                                Timber.e("Error", e);
-                                // TODO
+                                // Thrown if we try to save an object that already exists (which isn't a problem for us)
+                                if (!(e instanceof RealmPrimaryKeyConstraintException)) {
+                                    // TODO
+                                    Timber.e("Error", e);
+                                }
                             }
                         });
 
