@@ -3,14 +3,21 @@
     <!-- http://chir.ag/projects/name-that-color -->
     <color name="fun_green">#00802b</color>
     <color name="science_blue">#0052cc</color>
+    <color name="bright_red">#b30000</color>
+
+    <color name="white_0.8_alpha">#ccffffff</color>
+    <color name="white_0.5_alpha">#80ffffff</color>
 
     <color name="colorPrimary">#001f4d</color>
     <color name="colorPrimaryDark">#1a1a1a</color>
     <color name="colorAccent">#0066ff</color>
-    <color name="white_0.5_alpha">#80ffffff</color>
+
     <color name="hint">@color/white_0.5_alpha</color>
-    <color name="button_text">@color/white_0.5_alpha</color>
-    <color name="fab_clear_proxy">#b30000</color>
-    <color name="fab_save_proxy">@color/fun_green</color>
+
+    <color name="set_button_enabled">@color/fun_green</color>
+    <color name="set_button_disabled">#8000802b</color>
+
+    <color name="clear_button_enabled">@color/bright_red</color>
+    <color name="clear_button_disabled">#80b30000</color>
 
 </resources>

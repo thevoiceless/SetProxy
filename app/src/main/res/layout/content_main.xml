@@ -15,7 +15,7 @@
         android:paddingTop="30dp"
         android:paddingLeft="30dp"
         android:paddingRight="30dp"
-        android:paddingBottom="15dp"
+        android:paddingBottom="0dp"
         android:orientation="horizontal">
 
         <android.support.design.widget.TextInputLayout
@@ -71,15 +71,44 @@
 
     </LinearLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/clear_save_fab"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:visibility="invisible"
-        android:src="@drawable/save"
-        app:backgroundTint="@color/fun_green"
-        tools:visibility="visible"/>
+        android:orientation="horizontal"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp">
+
+        <TextView
+            android:id="@+id/button_set"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:padding="5dp"
+            android:gravity="center_horizontal"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="26dp"
+            android:textColor="@color/set_button_text"
+            android:text="@string/set"/>
+
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="match_parent"/>
+
+        <TextView
+            android:id="@+id/button_clear"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:padding="5dp"
+            android:gravity="center_horizontal"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="26dp"
+            android:textColor="@color/clear_button_text"
+            android:text="@string/clear"/>
+
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"

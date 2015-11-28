@@ -1,24 +1,24 @@
 package thevoiceless.setproxy.activities;
 
-import android.animation.Animator;
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.net.ProxyInfo;
+import android.graphics.Typeface;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.realm.Realm;
 import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.Utils;
@@ -46,81 +46,21 @@ public class MainActivity extends AppCompatActivity {
     TextInputLayout mPortInputLayout;
     @Bind(R.id.port_input)
     EditText mPortInput;
-    @Bind(R.id.clear_save_fab)
-    FloatingActionButton mClearSaveFab;
+    @Bind(R.id.button_set)
+    TextView mSetButton;
+    @Bind(R.id.button_clear)
+    TextView mClearButton;
     @Bind(R.id.proxies_list)
     ProxyConfigurationsRecyclerView mProxiesList;
+    // TODO
     @Bind(R.id.proxies_list_empty)
     View mListEmptyView;
 
     private Realm mRealm;
-
+    private ProxyConfiguration mCurrentProxy;
     private WifiManager mWifiManager;
-
-    private Animator.AnimatorListener mSaveFabAnimatorListener = new Utils.AnimatorListener() {
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            mClearSaveFab.setVisibility(View.VISIBLE);
-            mClearSaveFab.setBackgroundTintList(getResources().getColorStateList(R.color.fab_save_proxy));
-            mClearSaveFab.setImageResource(R.drawable.save);
-
-            mClearSaveFab.animate().scaleX(1f).scaleY(1f).setDuration(200).setListener(null).start();
-
-            mClearSaveFab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (validateInput() && Utils.setWifiProxySettings(MainActivity.this, hostString(), Integer.valueOf(portString()))) {
-                        final ProxyConfiguration proxy = new ProxyConfiguration(hostString(), portString());
-                        mRealm.executeTransaction(new Realm.Transaction() {
-                                    @Override
-                                    public void execute(Realm realm) {
-                                        realm.copyToRealmOrUpdate(proxy);
-                                    }
-                                },
-                                new Realm.Transaction.Callback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        // FIXME: Duplicates
-                                        mProxiesList.addProxy(proxy);
-                                    }
-
-                                    @Override
-                                    public void onError(Exception e) {
-                                        Timber.e("Error", e);
-                                        // TODO
-                                    }
-                                });
-                        setFabClearsProxy();
-                        populateFields(Utils.getCurrentProxy(MainActivity.this));
-                    } else {
-                        // TODO
-                    }
-                }
-            });
-        }
-    };
-
-    private Animator.AnimatorListener mClearFabAnimatorListener = new Utils.AnimatorListener() {
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            mClearSaveFab.setVisibility(View.VISIBLE);
-            mClearSaveFab.setBackgroundTintList(getResources().getColorStateList(R.color.fab_clear_proxy));
-            mClearSaveFab.setImageResource(R.drawable.clear);
-
-            mClearSaveFab.animate().scaleX(1f).scaleY(1f).setDuration(200).setListener(null).start();
-
-            mClearSaveFab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (Utils.unsetWifiProxySettings(MainActivity.this)) {
-                        setFabSavesProxy();
-                    } else {
-                        // TODO
-                    }
-                }
-            });
-        }
-    };
+    private Typeface mEnabledTypeface = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+    private Typeface mDisabledTypeface = Typeface.create("sans-serif-thin", Typeface.NORMAL);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,19 +73,8 @@ public class MainActivity extends AppCompatActivity {
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
         initProxyInfo();
+        initListeners();
 
-        mProxiesList.setOnItemClickListener(new ProxyConfigurationAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(@NonNull View v, int position) {
-                ProxyConfiguration proxy = mProxiesList.getProxy(position);
-                if (Utils.setWifiProxySettings(MainActivity.this, proxy.getHost(), Integer.valueOf(proxy.getPort()))) {
-                    populateFields(proxy);
-                    setFabClearsProxy();
-                } else {
-                    // TODO
-                }
-            }
-        });
         // It feels wrong to do this on the UI thread, but supposedly that's okay with Realm (and impossible to load from another thread)
         mProxiesList.setData(mRealm.allObjects(ProxyConfiguration.class));
     }
@@ -160,18 +89,20 @@ public class MainActivity extends AppCompatActivity {
     private void initProxyInfo() {
         if (!mWifiManager.isWifiEnabled()) {
             // TODO also check if connected
+            return;
         }
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                final ProxyInfo proxyInfo = Utils.getCurrentProxy(this);
+                mCurrentProxy = Utils.getCurrentProxy(this);
 
-                if (proxyInfo != null) {
+                if (mCurrentProxy != null) {
                     // Proxy is already set
-                    populateFields(proxyInfo);
-                    setFabClearsProxy();
+                    populateFields(mCurrentProxy);
+                    disableSetButton();
                 } else {
-                    setFabSavesProxy();
+                    disableSetButton();
+                    disableClearButton();
                 }
             } else {
                 // TODO
@@ -179,13 +110,93 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) { }
     }
 
-    private void setFabClearsProxy() {
-        mClearSaveFab.animate().scaleX(0f).scaleY(0f).setDuration(200).setListener(mClearFabAnimatorListener).start();
+    private void initListeners() {
+        mProxiesList.setOnItemClickListener(new ProxyConfigurationAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(@NonNull View v, int position) {
+                ProxyConfiguration proxy = mProxiesList.getProxy(position);
+                if (Utils.setWifiProxySettings(MainActivity.this, proxy.getHost(), Integer.valueOf(proxy.getPort()))) {
+                    mCurrentProxy = proxy;
+                    populateFields(mCurrentProxy);
+                    disableSetButton();
+                    enableClearButton();
+                } else {
+                    // TODO
+                }
+            }
+        });
 
+        mHostInput.addTextChangedListener(new Utils.TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                updateButtonState();
+            }
+        });
+
+        mPortInput.addTextChangedListener(new Utils.TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+                updateButtonState();
+            }
+        });
     }
 
-    private void setFabSavesProxy() {
-        mClearSaveFab.animate().scaleX(0f).scaleY(0f).setDuration(200).setListener(mSaveFabAnimatorListener).start();
+    @OnClick(R.id.button_set)
+    public void setProxyClicked() {
+        if (validateInput() && Utils.setWifiProxySettings(MainActivity.this, hostString(), Integer.valueOf(portString()))) {
+            mCurrentProxy = new ProxyConfiguration(hostString(), portString());
+
+            mRealm.executeTransaction(new Realm.Transaction() {
+                            @Override
+                            public void execute(Realm realm) {
+                                realm.copyToRealmOrUpdate(mCurrentProxy);
+                            }
+                        },
+                        new Realm.Transaction.Callback() {
+                            @Override
+                            public void onSuccess() {
+                                // FIXME: Duplicates
+                                mProxiesList.addProxy(mCurrentProxy);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Timber.e("Error", e);
+                                // TODO
+                            }
+                        });
+
+            disableSetButton();
+            enableClearButton();
+        } else {
+            // TODO
+        }
+    }
+
+    @OnClick(R.id.button_clear)
+    public void clearProxyClicked() {
+        if (Utils.unsetWifiProxySettings(MainActivity.this)) {
+            mCurrentProxy = null;
+            populateFields(mCurrentProxy);
+            disableClearButton();
+        } else {
+            // TODO
+        }
+    }
+
+    private void updateButtonState() {
+        if (isHostValid() && isPortValid()) {
+            if (mCurrentProxy == null) {
+                enableSetButton();
+                return;
+            } else if (!hostString().equalsIgnoreCase(mCurrentProxy.getHost())
+                    || !portString().equalsIgnoreCase(mCurrentProxy.getPort())) {
+                enableSetButton();
+                return;
+            }
+        }
+
+        disableSetButton();
     }
 
     private boolean validateInput() {
@@ -205,19 +216,30 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private boolean isHostValid() {
+        if (TextUtils.isEmpty(hostString())) return false;
+
+        return true;
+    }
+
     private boolean validatePort() {
         if (TextUtils.isEmpty(portString())) {
             mPortInputLayout.setError(getString(R.string.port_error_empty));
             return false;
         }
-        try {
-            Integer.valueOf(portString());
-        } catch (NumberFormatException e) {
+        if (!Utils.canParseInteger(portString())) {
             mPortInputLayout.setError(getString(R.string.port_error_number));
             return false;
         }
 
         mPortInputLayout.setError(null);
+        return true;
+    }
+
+    private boolean isPortValid() {
+        if (TextUtils.isEmpty(portString())) return false;
+        if (!Utils.canParseInteger(portString())) return false;
+
         return true;
     }
 
@@ -229,17 +251,6 @@ public class MainActivity extends AppCompatActivity {
         return mPortInput.getText().toString().trim();
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void populateFields(@Nullable final ProxyInfo proxyInfo) {
-        if (proxyInfo != null) {
-            mHostInput.setText(proxyInfo.getHost());
-            mPortInput.setText(String.valueOf(proxyInfo.getPort()));
-        } else {
-            mHostInput.setText(null);
-            mPortInput.setText(null);
-        }
-    }
-
     private void populateFields(@Nullable final ProxyConfiguration proxy) {
         if (proxy != null) {
             mHostInput.setText(proxy.getHost());
@@ -248,5 +259,25 @@ public class MainActivity extends AppCompatActivity {
             mHostInput.setText(null);
             mPortInput.setText(null);
         }
+    }
+
+    private void enableSetButton() {
+        mSetButton.setTypeface(mEnabledTypeface);
+        mSetButton.setEnabled(true);
+    }
+
+    private void disableSetButton() {
+        mSetButton.setTypeface(mDisabledTypeface);
+        mSetButton.setEnabled(false);
+    }
+
+    private void enableClearButton() {
+        mClearButton.setTypeface(mEnabledTypeface);
+        mClearButton.setEnabled(true);
+    }
+
+    private void disableClearButton() {
+        mClearButton.setTypeface(mDisabledTypeface);
+        mClearButton.setEnabled(false);
     }
 }

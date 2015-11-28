@@ -1,5 +1,8 @@
 package thevoiceless.setproxy.data;
 
+import android.annotation.TargetApi;
+import android.net.ProxyInfo;
+import android.os.Build;
 import android.support.annotation.NonNull;
 
 import io.realm.RealmObject;
@@ -26,6 +29,11 @@ public class ProxyConfiguration extends RealmObject {
         this.host = host;
         this.port = port;
         this.id = String.format("%s%s", host, port).toLowerCase().hashCode();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public ProxyConfiguration(@NonNull final ProxyInfo proxyInfo) {
+        this(proxyInfo.getHost(), String.valueOf(proxyInfo.getPort()));
     }
 
     public int getId() {

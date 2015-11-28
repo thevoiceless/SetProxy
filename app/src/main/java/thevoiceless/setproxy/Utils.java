@@ -17,6 +17,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import thevoiceless.setproxy.data.ProxyConfiguration;
 import timber.log.Timber;
 
 /**
@@ -51,11 +52,12 @@ public class Utils {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Nullable
-    public static ProxyInfo getCurrentProxy(@NonNull final Context context) {
+    public static ProxyConfiguration getCurrentProxy(@NonNull final Context context) {
         try {
             WifiConfiguration config = getCurrentWifiConfiguration(context);
             Method getHttpProxy = WifiConfiguration.class.getDeclaredMethod("getHttpProxy");
-            return (ProxyInfo) getHttpProxy.invoke(config);
+            ProxyInfo p = (ProxyInfo) getHttpProxy.invoke(config);
+            return (p == null) ? null : new ProxyConfiguration(p);
         } catch (Exception e) {
             return null;
         }
@@ -229,5 +231,15 @@ public class Utils {
         }
 
         return true;
+    }
+
+    public static boolean canParseInteger(@Nullable final String value) {
+        if (TextUtils.isEmpty(value)) return false;
+        try {
+            Integer.valueOf(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
