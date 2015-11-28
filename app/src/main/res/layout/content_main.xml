@@ -35,7 +35,7 @@
                 android:inputType="textUri"
                 android:textColor="@android:color/white"
                 android:gravity="center_horizontal"
-                android:imeOptions="actionNext"/>
+                android:imeOptions="actionNext|flagNoExtractUi"/>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -64,7 +64,8 @@
                 android:inputType="number"
                 android:digits="1234567890"
                 android:textColor="@android:color/white"
-                android:gravity="center_horizontal" />
+                android:gravity="center_horizontal"
+                android:imeOptions="flagNoExtractUi"/>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -75,6 +76,44 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:visibility="invisible"/>
+        android:visibility="invisible"
+        android:src="@drawable/save"
+        app:backgroundTint="@color/fun_green"
+        tools:visibility="visible"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:paddingLeft="16dp"
+        android:paddingBottom="8dp"
+        android:text="@string/history"
+        android:textColor="@color/colorAccent"
+        android:textSize="12sp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorAccent"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <thevoiceless.setproxy.views.ProxyConfigurationsRecyclerView
+            android:id="@+id/proxies_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <TextView
+            android:id="@+id/proxies_list_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@color/white_0.5_alpha"
+            android:text="@string/no_history"
+            android:visibility="gone"/>
+
+    </FrameLayout>
 
 </LinearLayout>
