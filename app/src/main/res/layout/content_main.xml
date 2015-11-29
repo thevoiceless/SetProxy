@@ -125,24 +125,9 @@
         android:layout_height="1dp"
         android:background="@color/colorAccent"/>
 
-    <FrameLayout
+    <thevoiceless.setproxy.views.ProxyListContainer
+        android:id="@+id/proxy_list_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <thevoiceless.setproxy.views.ProxyConfigurationsRecyclerView
-            android:id="@+id/proxies_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-        <TextView
-            android:id="@+id/proxies_list_empty"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:textColor="@color/white_0.5_alpha"
-            android:text="@string/no_history"
-            android:visibility="gone"/>
-
-    </FrameLayout>
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

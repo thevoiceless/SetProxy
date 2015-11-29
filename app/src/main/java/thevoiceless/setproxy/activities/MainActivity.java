@@ -25,7 +25,7 @@ import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.Utils;
 import thevoiceless.setproxy.adapters.ProxyConfigurationAdapter;
 import thevoiceless.setproxy.data.ProxyConfiguration;
-import thevoiceless.setproxy.views.ProxyConfigurationsRecyclerView;
+import thevoiceless.setproxy.views.ProxyListContainer;
 import timber.log.Timber;
 
 /**
@@ -51,11 +51,8 @@ public class MainActivity extends AppCompatActivity {
     TextView mSetButton;
     @Bind(R.id.button_clear)
     TextView mClearButton;
-    @Bind(R.id.proxies_list)
-    ProxyConfigurationsRecyclerView mProxiesList;
-    // TODO
-    @Bind(R.id.proxies_list_empty)
-    View mListEmptyView;
+    @Bind(R.id.proxy_list_container)
+    ProxyListContainer mProxiesList;
 
     private Realm mRealm;
     private ProxyConfiguration mCurrentProxy;
@@ -161,9 +158,11 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onError(Exception e) {
                                 // Thrown if we try to save an object that already exists (which isn't a problem for us)
-                                if (!(e instanceof RealmPrimaryKeyConstraintException)) {
+                                if (e instanceof RealmPrimaryKeyConstraintException) {
+                                    Timber.i("Proxy already exists in database");
+                                } else {
                                     // TODO
-                                    Timber.e("Error", e);
+                                    Timber.e("Error saving proxy", e);
                                 }
                             }
                         });

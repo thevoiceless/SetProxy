@@ -72,10 +72,6 @@ public class ProxyConfigurationAdapter extends RecyclerView.Adapter<ProxyConfigu
         holder.proxy = proxy;
     }
 
-    public ProxyConfiguration getItem(final int position) {
-        return mProxies.get(position);
-    }
-
     public void setOnItemClickListener(@Nullable final OnItemClickListener listener) {
         mListener = listener;
         notifyDataSetChanged();

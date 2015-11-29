@@ -41,16 +41,16 @@ public class ProxyConfigurationsRecyclerView extends RecyclerView {
         return ((ProxyConfigurationAdapter) super.getAdapter());
     }
 
-    public ProxyConfiguration getProxy(final int position) {
-        return getAdapter().getItem(position);
-    }
-
     public void setOnItemClickListener(@Nullable final ProxyConfigurationAdapter.OnItemClickListener listener) {
         getAdapter().setOnItemClickListener(listener);
     }
 
     public void setData(@NonNull final List<ProxyConfiguration> proxies) {
         getAdapter().setData(proxies);
+    }
+
+    public boolean hasData() {
+        return getAdapter().getItemCount() != 0;
     }
 
     public void addProxy(@NonNull final ProxyConfiguration proxy) {
