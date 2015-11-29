@@ -28,14 +28,7 @@ import thevoiceless.setproxy.data.ProxyConfiguration;
 import thevoiceless.setproxy.views.ProxyListContainer;
 import timber.log.Timber;
 
-/**
- * http://stackoverflow.com/a/14294761
- */
 public class MainActivity extends AppCompatActivity {
-
-    private static final String HOST = "192.168.1.5";
-    private static final int PORT = 8888;
-    private static final int LOADER_ID = 123;
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -112,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
         mProxiesList.setOnItemClickListener(new ProxyConfigurationAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(@NonNull View v, @NonNull final ProxyConfiguration proxy) {
+                if (mCurrentProxy != null && mCurrentProxy.getId() == proxy.getId()) return;
                 if (Utils.setWifiProxySettings(MainActivity.this, proxy.getHost(), Integer.valueOf(proxy.getPort()))) {
                     mCurrentProxy = proxy;
                     populateFields(mCurrentProxy);

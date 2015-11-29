@@ -46,23 +46,14 @@ public class ProxyListContainer extends FrameLayout {
     }
 
     public void setData(@NonNull final List<ProxyConfiguration> proxies) {
-        if (mRecyclerView.hasData()) {
-            if (proxies.isEmpty()) {
-                mRecyclerView.setData(proxies);
-                mRecyclerView.setVisibility(GONE);
-                mEmptyView.setVisibility(VISIBLE);
-            } else {
-                mRecyclerView.setData(proxies);
-            }
+        if (proxies.isEmpty()) {
+            mRecyclerView.setVisibility(GONE);
+            mEmptyView.setVisibility(VISIBLE);
         } else {
-            if (proxies.isEmpty()) {
-                mEmptyView.setVisibility(VISIBLE);
-            } else {
-                mRecyclerView.setVisibility(VISIBLE);
-                mEmptyView.setVisibility(GONE);
-                mRecyclerView.setData(proxies);
-            }
+            mRecyclerView.setVisibility(VISIBLE);
+            mEmptyView.setVisibility(GONE);
         }
+        mRecyclerView.setData(proxies);
     }
 
     public void addProxy(@NonNull final ProxyConfiguration proxy) {

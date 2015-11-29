@@ -22,6 +22,8 @@ import timber.log.Timber;
 
 /**
  * Created by riley on 11/26/15.
+ *
+ * Proxy methods based on http://stackoverflow.com/a/14294761
  */
 public class Utils {
 
@@ -101,7 +103,6 @@ public class Utils {
     public static boolean setWifiProxySettings(@NonNull final Context context, @NonNull final String host, final int port) {
         if (TextUtils.isEmpty(host)) return false;
 
-        //get the current wifi configuration
         WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         WifiConfiguration config = getCurrentWifiConfiguration(context);
         if (config == null) return false;
@@ -126,11 +127,11 @@ public class Utils {
                 setProxy.invoke(config, methodParams);
             } else {
                 // TODO: Test on API < 21
-                //get the link properties from the wifi configuration
+                // Get the link properties from the wifi configuration
                 Object linkProperties = getField(config, "linkProperties");
                 if (linkProperties == null) return false;
 
-                //get the setHttpProxy method for LinkProperties
+                // Get the setHttpProxy method for LinkProperties
                 Class proxyPropertiesClass = Class.forName("android.net.ProxyProperties");
                 Class[] setHttpProxyParams = new Class[1];
                 setHttpProxyParams[0] = proxyPropertiesClass;
@@ -138,7 +139,7 @@ public class Utils {
                 Method setHttpProxy = lpClass.getDeclaredMethod("setHttpProxy", setHttpProxyParams);
                 setHttpProxy.setAccessible(true);
 
-                //get ProxyProperties constructor
+                // Get ProxyProperties constructor
                 Class[] proxyPropertiesCtorParamTypes = new Class[3];
                 proxyPropertiesCtorParamTypes[0] = String.class;
                 proxyPropertiesCtorParamTypes[1] = int.class;
@@ -146,16 +147,16 @@ public class Utils {
 
                 Constructor proxyPropertiesCtor = proxyPropertiesClass.getConstructor(proxyPropertiesCtorParamTypes);
 
-                //create the parameters for the constructor
+                // Create the parameters for the constructor
                 Object[] proxyPropertiesCtorParams = new Object[3];
                 proxyPropertiesCtorParams[0] = host;
                 proxyPropertiesCtorParams[1] = port;
                 proxyPropertiesCtorParams[2] = null;
 
-                //create a new object using the params
+                // Create a new object using the params
                 Object proxySettings = proxyPropertiesCtor.newInstance(proxyPropertiesCtorParams);
 
-                //pass the new object to setHttpProxy
+                // Pass the new object to setHttpProxy
                 Object[] params = new Object[1];
                 params[0] = proxySettings;
                 setHttpProxy.invoke(linkProperties, params);
@@ -163,11 +164,11 @@ public class Utils {
                 setProxySettings("STATIC", config);
             }
 
-            //save the settings
+            // Save
             manager.updateNetwork(config);
-            // TODO: Determine if these are needed
-//            manager.disconnect();
-//            manager.reconnect();
+            // 'Modify Network' dialog would show the proxy as being set, but requests were not being sent through it unless we disconnect and reconnect
+            manager.disconnect();
+            manager.reconnect();
         } catch(Exception e) {
             Timber.e(e, "setWifiProxySettings");
             return false;
@@ -200,11 +201,11 @@ public class Utils {
                 setProxy.invoke(config, methodParams);
             } else {
                 // TODO: Test on API < 21
-                //get the link properties from the wifi configuration
+                // Get the link properties from the wifi configuration
                 Object linkProperties = getField(config, "linkProperties");
                 if (linkProperties == null) return false;
 
-                //get the setHttpProxy method for LinkProperties
+                // Get the setHttpProxy method for LinkProperties
                 Class proxyPropertiesClass = Class.forName("android.net.ProxyProperties");
                 Class[] setHttpProxyParams = new Class[1];
                 setHttpProxyParams[0] = proxyPropertiesClass;
@@ -212,7 +213,7 @@ public class Utils {
                 Method setHttpProxy = lpClass.getDeclaredMethod("setHttpProxy", setHttpProxyParams);
                 setHttpProxy.setAccessible(true);
 
-                //pass null as the proxy
+                // Pass null as the proxy
                 Object[] params = new Object[1];
                 params[0] = null;
                 setHttpProxy.invoke(linkProperties, params);
@@ -220,11 +221,11 @@ public class Utils {
                 setProxySettings("NONE", config);
             }
 
-            //save the config
+            // Save
             manager.updateNetwork(config);
-            // TODO: Determine if these are needed
-//            manager.disconnect();
-//            manager.reconnect();
+            // 'Modify Network' dialog would not show proxy as not being set, but requests were still being sent through it unless we disconnect and reconnect
+            manager.disconnect();
+            manager.reconnect();
         } catch(Exception e) {
             Timber.e(e, "unsetWifiProxySettings");
             return false;
