@@ -7,10 +7,12 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
+import android.view.View
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import thevoiceless.setproxy.R
 import thevoiceless.setproxy.Utils
+import thevoiceless.setproxy.adapters.ProxyConfigurationAdapter
 import thevoiceless.setproxy.data.ProxyConfiguration
 
 class MainActivity : AppCompatActivity() {
@@ -78,15 +80,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initListeners() {
-        proxy_list_container.setOnItemClickListener({ _, proxy ->
-            if (proxy.id != currentProxy?.id) {
-                if (Utils.setWifiProxySettings(this@MainActivity, proxy.host, proxy.port.toInt())) {
-                    currentProxy = proxy
-                    populateFields(currentProxy)
-                    disableSetButton()
-                    enableClearButton()
-                } else {
-                    Toast.makeText(this, R.string.set_proxy_failed, Toast.LENGTH_SHORT).show()
+        proxy_list_container.setOnItemClickListener(object : ProxyConfigurationAdapter.OnItemClickListener {
+            override fun onItemClick(v: View, proxy: ProxyConfiguration) {
+                if (proxy.id != currentProxy?.id) {
+                    if (Utils.setWifiProxySettings(this@MainActivity, proxy.host, proxy.port.toInt())) {
+                        currentProxy = proxy
+                        populateFields(currentProxy)
+                        disableSetButton()
+                        enableClearButton()
+                    } else {
+                        Toast.makeText(v.context, R.string.set_proxy_failed, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         })

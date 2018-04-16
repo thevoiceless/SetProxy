@@ -14,40 +14,29 @@ import thevoiceless.setproxy.data.ProxyConfiguration
 /**
  * Created by riley on 11/27/15.
  */
-class ProxyConfigurationAdapter : RecyclerView.Adapter<ProxyConfigurationAdapter.ProxyViewHolder> {
+class ProxyConfigurationAdapter : RecyclerView.Adapter<ProxyConfigurationAdapter.ProxyViewHolder>() {
 
-    private var mProxies: ArrayList<ProxyConfiguration>? = null
-    private var mListener: OnItemClickListener? = null
+    private val proxies = mutableListOf<ProxyConfiguration>()
+    private var clickListener: OnItemClickListener? = null
 
     interface OnItemClickListener {
         fun onItemClick(v: View, proxy: ProxyConfiguration)
     }
 
     class ProxyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), View.OnClickListener {
-        var host: TextView
-        var port: TextView
+        var host: TextView = itemView.findViewById(R.id.proxy_host)
+        var port: TextView = itemView.findViewById(R.id.proxy_port)
+
         var listener: OnItemClickListener? = null
-        var proxy: ProxyConfiguration? = null
+        lateinit var proxy: ProxyConfiguration
 
         init {
-
-            host = itemView.findViewById(R.id.proxy_host)
-            port = itemView.findViewById(R.id.proxy_port)
-
             itemView.setOnClickListener(this)
         }
 
         override fun onClick(v: View) {
-            if (listener != null) listener!!.onItemClick(v, proxy!!)
+            listener?.onItemClick(v, proxy)
         }
-    }
-
-    constructor() {
-        mProxies = ArrayList()
-    }
-
-    constructor(proxies: List<ProxyConfiguration>) {
-        mProxies = ArrayList(proxies)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProxyViewHolder {
@@ -56,29 +45,32 @@ class ProxyConfigurationAdapter : RecyclerView.Adapter<ProxyConfigurationAdapter
     }
 
     override fun onBindViewHolder(holder: ProxyViewHolder, position: Int) {
-        val proxy = mProxies!![position]
-        holder.host.text = proxy.host
-        holder.port.text = proxy.port
-        holder.listener = mListener
-        holder.proxy = proxy
+        val proxy = proxies[position]
+        holder.apply {
+            this.proxy = proxy
+            host.text = proxy.host
+            port.text = proxy.port
+            listener = clickListener
+        }
     }
 
     fun setOnItemClickListener(listener: OnItemClickListener?) {
-        mListener = listener
+        clickListener = listener
         notifyDataSetChanged()
     }
 
-    override fun getItemCount(): Int {
-        return mProxies!!.size
-    }
+    override fun getItemCount() = proxies.size
 
     fun addProxy(proxy: ProxyConfiguration) {
-        mProxies!!.add(0, proxy)
+        proxies.add(0, proxy)
         notifyItemInserted(0)
     }
 
     fun setData(proxies: List<ProxyConfiguration>) {
-        mProxies = ArrayList(proxies)
+        this.proxies.apply {
+            clear()
+            addAll(proxies)
+        }
         notifyDataSetChanged()
     }
 }
