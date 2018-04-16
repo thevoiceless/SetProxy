@@ -19,7 +19,7 @@ public class ProxyConfiguration extends RealmObject {
     @Required
     private String host;
     @Required
-    private String port;
+    private String port; // TODO: Stop using string
 
     public ProxyConfiguration() {
         // Realm wants a no-arg constructor

@@ -100,6 +100,13 @@ public class Utils {
         setEnumField(wifiConf, assign, "proxySettings");
     }
 
+    /**
+     * TODO
+     * @param context
+     * @param host
+     * @param port
+     * @return success
+     */
     public static boolean setWifiProxySettings(@NonNull final Context context, @NonNull final String host, final int port) {
         if (TextUtils.isEmpty(host)) return false;
 

@@ -13,4 +13,8 @@
     <string name="host_error_empty">@string/required</string>
     <string name="port_error_empty">@string/required</string>
     <string name="port_error_number">Digits only</string>
+
+    <string name="not_supported">SetProxy may not work with your version of Android!</string>
+    <string name="set_proxy_failed">Unable to set proxy</string>
+    <string name="clear_proxy_failed">Unable to clear proxy</string>
 </resources>
