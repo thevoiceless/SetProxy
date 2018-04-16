@@ -3,7 +3,6 @@ package thevoiceless.setproxy.activities
 import android.content.Context
 import android.graphics.Typeface
 import android.net.wifi.WifiManager
-import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
@@ -11,9 +10,10 @@ import android.view.View
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import thevoiceless.setproxy.R
-import thevoiceless.setproxy.Utils
 import thevoiceless.setproxy.adapters.ProxyConfigurationAdapter
 import thevoiceless.setproxy.data.ProxyConfiguration
+import thevoiceless.setproxy.utils.ProxyUtils
+import thevoiceless.setproxy.utils.TextWatcher
 
 class MainActivity : AppCompatActivity() {
 
@@ -62,20 +62,15 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            currentProxy = Utils.getCurrentProxy(this)
+        currentProxy = ProxyUtils.getCurrentProxy(this)
 
-            if (currentProxy != null) {
-                // Proxy is already set
-                populateFields(currentProxy)
-                disableSetButton()
-            } else {
-                disableSetButton()
-                disableClearButton()
-            }
+        if (currentProxy != null) {
+            // Proxy is already set
+            populateFields(currentProxy)
+            disableSetButton()
         } else {
-            Toast.makeText(this, R.string.not_supported, Toast.LENGTH_LONG).show()
-            // TODO: Error state in the UI
+            disableSetButton()
+            disableClearButton()
         }
     }
 
@@ -83,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         proxy_list_container.setOnItemClickListener(object : ProxyConfigurationAdapter.OnItemClickListener {
             override fun onItemClick(v: View, proxy: ProxyConfiguration) {
                 if (proxy.id != currentProxy?.id) {
-                    if (Utils.setWifiProxySettings(this@MainActivity, proxy.host, proxy.port.toInt())) {
+                    if (ProxyUtils.setWifiProxySettings(this@MainActivity, proxy.host, proxy.port.toInt())) {
                         currentProxy = proxy
                         populateFields(currentProxy)
                         disableSetButton()
@@ -95,13 +90,13 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        host_input.addTextChangedListener(object : Utils.TextWatcher() {
+        host_input.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable) {
                 updateSetButtonState()
             }
         })
 
-        port_input.addTextChangedListener(object : Utils.TextWatcher() {
+        port_input.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable) {
                 updateSetButtonState()
             }
@@ -112,7 +107,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setProxyClicked() {
-        if (validateInput() && Utils.setWifiProxySettings(this@MainActivity, hostString, Integer.valueOf(portString))) {
+        if (validateInput() && ProxyUtils.setWifiProxySettings(this@MainActivity, hostString, Integer.valueOf(portString))) {
             currentProxy = ProxyConfiguration(hostString, portString)
 
             //            mRealm.executeTransaction(new Realm.Transaction() {
@@ -147,7 +142,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun clearProxyClicked() {
-        if (Utils.unsetWifiProxySettings(this@MainActivity)) {
+        if (ProxyUtils.unsetWifiProxySettings(this@MainActivity)) {
             currentProxy = null
             populateFields(currentProxy)
             disableClearButton()
