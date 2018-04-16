@@ -8,7 +8,6 @@ import timber.log.Timber;
  * Created by riley on 11/26/15.
  */
 public class SetProxyApplication extends Application {
-
     @Override
     public void onCreate() {
         super.onCreate();

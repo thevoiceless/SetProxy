@@ -16,7 +16,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
@@ -30,24 +30,24 @@ import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
 
-    @Bind(R.id.toolbar)
+    @BindView(R.id.toolbar)
     Toolbar mToolbar;
-    @Bind(R.id.host_input_layout)
+    @BindView(R.id.host_input_layout)
     TextInputLayout mHostInputLayout;
-    @Bind(R.id.host_input)
+    @BindView(R.id.host_input)
     EditText mHostInput;
-    @Bind(R.id.port_input_layout)
+    @BindView(R.id.port_input_layout)
     TextInputLayout mPortInputLayout;
-    @Bind(R.id.port_input)
+    @BindView(R.id.port_input)
     EditText mPortInput;
-    @Bind(R.id.button_set)
+    @BindView(R.id.button_set)
     TextView mSetButton;
-    @Bind(R.id.button_clear)
+    @BindView(R.id.button_clear)
     TextView mClearButton;
-    @Bind(R.id.proxy_list_container)
+    @BindView(R.id.proxy_list_container)
     ProxyListContainer mProxiesList;
 
-    private Realm mRealm;
+//    private Realm mRealm;
     private ProxyConfiguration mCurrentProxy;
     private WifiManager mWifiManager;
     private Typeface mEnabledTypeface = Typeface.create("sans-serif-medium", Typeface.NORMAL);
@@ -60,21 +60,21 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
 
-        mRealm = Realm.getInstance(this);
-        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+//        mRealm = Realm.getInstance(this);
+        mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         initProxyInfo();
         initListeners();
 
         // It feels wrong to do this on the UI thread, but supposedly that's okay with Realm (and impossible to load from another thread)
-        mProxiesList.setData(mRealm.allObjects(ProxyConfiguration.class));
+//        mProxiesList.setData(mRealm.allObjects(ProxyConfiguration.class));
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mRealm.removeAllChangeListeners();
-        mRealm.close();
+//        mRealm.removeAllChangeListeners();
+//        mRealm.close();
     }
 
     private void initProxyInfo() {
@@ -137,29 +137,29 @@ public class MainActivity extends AppCompatActivity {
         if (validateInput() && Utils.setWifiProxySettings(MainActivity.this, hostString(), Integer.valueOf(portString()))) {
             mCurrentProxy = new ProxyConfiguration(hostString(), portString());
 
-            mRealm.executeTransaction(new Realm.Transaction() {
-                            @Override
-                            public void execute(Realm realm) {
-                                realm.copyToRealm(mCurrentProxy);
-                            }
-                        },
-                        new Realm.Transaction.Callback() {
-                            @Override
-                            public void onSuccess() {
-                                mProxiesList.addProxy(mCurrentProxy);
-                            }
-
-                            @Override
-                            public void onError(Exception e) {
-                                // Thrown if we try to save an object that already exists (which isn't a problem for us)
-                                if (e instanceof RealmPrimaryKeyConstraintException) {
-                                    Timber.i("Proxy already exists in database");
-                                } else {
-                                    // TODO
-                                    Timber.e("Error saving proxy", e);
-                                }
-                            }
-                        });
+//            mRealm.executeTransaction(new Realm.Transaction() {
+//                                          @Override
+//                                          public void execute(Realm realm) {
+//                                              realm.copyToRealm(mCurrentProxy);
+//                                          }
+//                                      },
+//                    new Realm.Transaction.Callback() {
+//                        @Override
+//                        public void onSuccess() {
+//                            mProxiesList.addProxy(mCurrentProxy);
+//                        }
+//
+//                        @Override
+//                        public void onError(Exception e) {
+//                            // Thrown if we try to save an object that already exists (which isn't a problem for us)
+//                            if (e instanceof RealmPrimaryKeyConstraintException) {
+//                                Timber.i("Proxy already exists in database");
+//                            } else {
+//                                // TODO
+//                                Timber.e("Error saving proxy", e);
+//                            }
+//                        }
+//                    });
 
             disableSetButton();
             enableClearButton();

@@ -14,8 +14,6 @@ import java.util.List;
 import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.data.ProxyConfiguration;
 
-import static butterknife.ButterKnife.findById;
-
 /**
  * Created by riley on 11/27/15.
  */
@@ -34,8 +32,8 @@ public class ProxyConfigurationAdapter extends RecyclerView.Adapter<ProxyConfigu
         public ProxyViewHolder(View itemView) {
             super(itemView);
 
-            host = findById(itemView, R.id.proxy_host);
-            port = findById(itemView, R.id.proxy_port);
+            host = itemView.findViewById(R.id.proxy_host);
+            port = itemView.findViewById(R.id.proxy_port);
 
             itemView.setOnClickListener(this);
         }
@@ -57,14 +55,15 @@ public class ProxyConfigurationAdapter extends RecyclerView.Adapter<ProxyConfigu
         mProxies = new ArrayList<>(proxies);
     }
 
+    @NonNull
     @Override
-    public ProxyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ProxyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_proxy, parent, false);
         return new ProxyViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(ProxyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ProxyViewHolder holder, int position) {
         ProxyConfiguration proxy = mProxies.get(position);
         holder.host.setText(proxy.getHost());
         holder.port.setText(proxy.getPort());

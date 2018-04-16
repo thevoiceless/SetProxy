@@ -10,7 +10,7 @@ import android.widget.FrameLayout;
 
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import thevoiceless.setproxy.R;
 import thevoiceless.setproxy.adapters.ProxyConfigurationAdapter;
@@ -21,9 +21,9 @@ import thevoiceless.setproxy.data.ProxyConfiguration;
  */
 public class ProxyListContainer extends FrameLayout {
 
-    @Bind(R.id.proxy_list)
+    @BindView(R.id.proxy_list)
     ProxyConfigurationsRecyclerView mRecyclerView;
-    @Bind(R.id.proxy_list_empty)
+    @BindView(R.id.proxy_list_empty)
     View mEmptyView;
 
     public ProxyListContainer(Context context) {
