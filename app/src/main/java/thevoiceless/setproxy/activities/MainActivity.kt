@@ -8,20 +8,26 @@ import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.view.View
 import android.widget.Toast
+import io.realm.Realm
+import io.realm.exceptions.RealmPrimaryKeyConstraintException
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.view_proxy_list_container.*
 import thevoiceless.setproxy.R
 import thevoiceless.setproxy.adapters.ProxyConfigurationAdapter
 import thevoiceless.setproxy.data.ProxyConfiguration
 import thevoiceless.setproxy.utils.ProxyUtils
 import thevoiceless.setproxy.utils.TextWatcher
+import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
 
-    //    private Realm mRealm;
     private var currentProxy: ProxyConfiguration? = null
     private lateinit var wifiManager: WifiManager
     private val enabledTypeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val disabledTypeface = Typeface.create("sans-serif-thin", Typeface.NORMAL)
+
+    private val realm: Realm
+        get() = Realm.getDefaultInstance()
 
     private val hostString: String
         get() = host_input.text.trim().toString()
@@ -40,20 +46,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        //        mRealm = Realm.getInstance(this);
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
         initProxyInfo()
         initListeners()
 
         // It feels wrong to do this on the UI thread, but supposedly that's okay with Realm (and impossible to load from another thread)
-        //        mProxiesList.setData(mRealm.allObjects(ProxyConfiguration.class));
+        proxy_list_container.setData(realm.where(ProxyConfiguration::class.java).findAll())
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        //        mRealm.removeAllChangeListeners();
-        //        mRealm.close();
+        realm.close()
     }
 
     private fun initProxyInfo() {
@@ -108,31 +112,21 @@ class MainActivity : AppCompatActivity() {
 
     fun setProxyClicked() {
         if (validateInput() && ProxyUtils.setWifiProxySettings(this@MainActivity, hostString, Integer.valueOf(portString))) {
-            currentProxy = ProxyConfiguration(hostString, portString)
-
-            //            mRealm.executeTransaction(new Realm.Transaction() {
-            //                                          @Override
-            //                                          public void execute(Realm realm) {
-            //                                              realm.copyToRealm(mCurrentProxy);
-            //                                          }
-            //                                      },
-            //                    new Realm.Transaction.Callback() {
-            //                        @Override
-            //                        public void onSuccess() {
-            //                            mProxiesList.addProxy(mCurrentProxy);
-            //                        }
-            //
-            //                        @Override
-            //                        public void onError(Exception e) {
-            //                            // Thrown if we try to save an object that already exists (which isn't a problem for us)
-            //                            if (e instanceof RealmPrimaryKeyConstraintException) {
-            //                                Timber.i("Proxy already exists in database");
-            //                            } else {
-            //                                // TODO
-            //                                Timber.e("Error saving proxy", e);
-            //                            }
-            //                        }
-            //                    });
+            ProxyConfiguration(hostString, portString).let { proxy ->
+                currentProxy = proxy
+                realm.executeTransactionAsync({ realm ->
+                            realm.copyToRealm(proxy)
+                        },
+                        {
+                            proxy_list_container.addProxy(proxy)
+                        },
+                        {
+                            when (it) {
+                                is RealmPrimaryKeyConstraintException -> Timber.i("Proxy already exists in the database")
+                                else -> Timber.e(it, "Error saving proxy")
+                            }
+                        })
+            }
 
             disableSetButton()
             enableClearButton()
